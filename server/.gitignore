@@ -1,0 +1,12 @@
+# Dataset :-
+articles.csv
+database.zip
+
+# pkl files :-
+recommender.pkl
+tfidf.pkl
+tfidf_matrix.pkl
+
+# Environment files :-
+env/
+__pycache__/
