@@ -1,27 +1,68 @@
-from flask import *
-
-app = Flask(__name__)
-
-# Enable CORS :-
+from flask import Flask, request
+import pymongo
+import base64
 from flask_cors import CORS
-
-CORS(app)
-
-# Calling middleware :-
 import middleware.middleware as middleware
 
+app = Flask(__name__)
+CORS(app)
 app.wsgi_app = middleware.AuthenticationMiddleware(app.wsgi_app)
 
-import pymongo
-
-myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+# MongoDB client
+myclient = pymongo.MongoClient(
+    "mongodb+srv://genaigcp62:Royals@wallmart.zjrlc.mongodb.net/?retryWrites=true&w=majority&appName=wallmart"
+)
 mydb = myclient["mydatabase"]
 collection = mydb["mycollection"]
 search_collection = mydb["searchHistory"]
 
-import base64
 
-# Register the blueprints :-
+# Initialize the collections and insert some initial data
+def initialize_collections():
+    collection.drop()
+    search_collection.drop()
+
+    # Create the collections
+    mydb.create_collection("mycollection")
+    mydb.create_collection("searchHistory")
+
+    # Insert some initial data into the collections
+    sample_products = [
+        {
+            "article_id": 1,
+            "name": "Product 1",
+            "price": 100,
+            "image": base64.b64encode(b"sample_image_1").decode("utf-8"),
+        },
+        {
+            "article_id": 2,
+            "name": "Product 2",
+            "price": 200,
+            "image": base64.b64encode(b"sample_image_2").decode("utf-8"),
+        },
+        {
+            "article_id": 3,
+            "name": "Product 3",
+            "price": 150,
+            "image": base64.b64encode(b"sample_image_3").decode("utf-8"),
+        },
+        # Add more sample products as needed
+    ]
+
+    sample_search_history = [
+        {"user_id": "user1", "search_string": "Product 1"},
+        {"user_id": "user2", "search_string": "Product 2"},
+        # Add more sample search history as needed
+    ]
+
+    collection.insert_many(sample_products)
+    search_collection.insert_many(sample_search_history)
+
+
+# Call the function to initialize collections and data
+initialize_collections()
+
+# Register the blueprints
 import routes.users as users
 
 app.register_blueprint(users.users_bp)
@@ -35,10 +76,10 @@ import routes.buy as buy
 app.register_blueprint(buy.buy_bp)
 
 import search_result
+
 # import recommender
 
 
-# Endpoint to search for items with a given search string :-
 @app.route("/search", methods=["POST"])
 def search():
     try:
@@ -62,7 +103,6 @@ def search():
         return {"error": "Server error"}, 500
 
 
-# Endpoint to search for a particular item with a given article_id :-
 @app.route("/getitemdetails", methods=["POST"])
 def getItemDetails():
     try:
@@ -79,7 +119,6 @@ def getItemDetails():
         return {"error": "Server error"}, 500
 
 
-# Endpoint to search for top 8 similar products which are cheaper than a given product :-
 @app.route("/cheaper", methods=["POST"])
 def cheaper():
     try:
@@ -108,7 +147,6 @@ def cheaper():
         return {"error": "Server error"}, 500
 
 
-# Endpoint to find the top 3 search recommendations of users :-
 @app.route("/toppromotion")
 def toppromotion():
     try:
@@ -136,7 +174,6 @@ def toppromotion():
         return {"error": "Server error"}, 500
 
 
-# Endpoint to find products according to the search history of users :-
 @app.route("/promotion")
 def promotion():
     try:
