@@ -19,6 +19,7 @@ search_collection = mydb["searchHistory"]
 
 # Initialize the collections and insert some initial data
 def initialize_collections():
+    # Drop the collections if they already exist
     collection.drop()
     search_collection.drop()
 
